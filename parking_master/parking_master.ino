@@ -119,10 +119,10 @@ void ultrasonic() {
   park03WarrThread.check();
   park04WarrThread.check();
   
-//  Serial1.print("disC - ");
-//  Serial1.println(distance01);
-//  Serial1.print("disD - ");
-//  Serial1.println(distance02);
+  Serial1.print("disC - ");
+  Serial1.println(distance01);
+  Serial1.print("disD - ");
+  Serial1.println(distance02);
 }
 
 TimedAction ultraSonicThread = TimedAction(300, ultrasonic);
@@ -293,6 +293,12 @@ void setup() {
   lcd.clear();
   digitalWrite(13, LOW);
   lcd.print("Avalible Slots :");
+
+motor4.write(153);
+delay(500);
+motor4.write(93);
+
+  
 }
 
 void loop() {
@@ -302,6 +308,8 @@ void loop() {
     parking_slot02();
     specialParking_slot03();
     specialParking_slot04();
+    motor03Thread.check();
+    motor04Thread.check();
   Serial.print(slotA);
   Serial.print("_");
   Serial.print(slotB);
@@ -312,32 +320,35 @@ void loop() {
   Serial.println("_");
 
   //get & apply reservation data from raspberrypi throgh out usb.
-  while (Serial.available()) {
-    delay(1000);
+  if (Serial.available()) {
     command = Serial.readStringUntil('\n');
     command.trim();
-    if (command.equals("slotCBooked")) {
+    if (command.substring(0, 2).equals("CB")) {
       bookC = 1;
-    } else if (command.equals("slotDBooked")) {
-      bookD = 1;
-    } else if (command.equals("slotCCle")) {
+    }else if (command.substring(0, 2).equals("CC")) {
       bookC = 0;
-    } else if (command.equals("slotDCle")) {
+    } 
+    
+    if (command.substring(2, 4).equals("DB")) {
+      bookD = 1;
+    }else if (command.substring(2, 4).equals("DC")) {
       bookD = 0;
-    } else if (command.equals("CGateOpen")) {
+    } 
+    
+    if (command.substring(4, 6).equals("CG")) {
       gateC = 1;
-    } else if (command.equals("DGateOpen")) {
-      gateD = 1;
-    } else if (command.equals("CGateClose")) {
+    }else if (command.substring(4, 6).equals("CT")) {
       gateC = 0;
-    } else if (command.equals("DGateClose")) {
-      gateD = 0;
-    } else {
-      break;
-      //lcd.setCursor(0, 1);
-      Serial.print("Else Part Executed");
     }
-  }
+    
+    if (command.substring(6, 8).equals("DG")) {
+      gateD = 1;
+    }else if (command.substring(6, 8).equals("DT")) {
+      gateD = 0;
+    }
+    Serial.println(command);
+    Serial.println(command.substring(6, 8));
+  }   
 
     parking_slot01();
     parking_slot02();
@@ -353,8 +364,6 @@ void loop() {
     ultraSonicThread.check();
     motor02Thread.check();
     motor01Thread.check();
-    motor03Thread.check();
-    motor04Thread.check();
   }
   else if (slotA == 0 && slotB == 0 && slotC == 0 && slotD == 0 ) {
     isallslotedFull = false;
@@ -363,14 +372,9 @@ void loop() {
     lcd.print("All Slots Empty ");
     ultraSonicThread.check();
     motor02Thread.check();
-    motor01Thread.check();
-    motor03Thread.check();
-    motor04Thread.check();
-    
+    motor01Thread.check();    
   }
   else {
-    motor04Thread.check();
-    motor03Thread.check();
     motor02Thread.check();
     motor01Thread.check();
     digitalWrite(13, LOW);
