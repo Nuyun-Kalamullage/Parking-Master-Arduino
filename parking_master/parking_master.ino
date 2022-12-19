@@ -249,7 +249,7 @@ void setup() {
   motor1.attach(14);
   motor2.attach(15);
   motor3.attach(16);
-  motor4.attach(8);
+  motor4.attach(17);
   
   pinMode(13, OUTPUT);
   pinMode(18, INPUT);
@@ -312,35 +312,32 @@ void loop() {
   Serial.println("_");
 
   //get & apply reservation data from raspberrypi throgh out usb.
-  if (Serial.available()) {
+  while (Serial.available()) {
+    delay(1000);
     command = Serial.readStringUntil('\n');
     command.trim();
-    if (command.substring(0, 2).equals("CB")) {
+    if (command.equals("slotCBooked")) {
       bookC = 1;
-    }else if (command.substring(0, 2).equals("CC")) {
-      bookC = 0;
-    } 
-    
-    if (command.substring(2, 4).equals("DB")) {
+    } else if (command.equals("slotDBooked")) {
       bookD = 1;
-    }else if (command.substring(2, 4).equals("DC")) {
+    } else if (command.equals("slotCCle")) {
+      bookC = 0;
+    } else if (command.equals("slotDCle")) {
       bookD = 0;
-    } 
-    
-    if (command.substring(4, 6).equals("CG")) {
+    } else if (command.equals("CGateOpen")) {
       gateC = 1;
-    }else if (command.substring(4, 6).equals("CT")) {
-      gateC = 0;
-    }
-    
-    if (command.substring(6, 8).equals("DG")) {
+    } else if (command.equals("DGateOpen")) {
       gateD = 1;
-    }else if (command.substring(6, 8).equals("CT")) {
+    } else if (command.equals("CGateClose")) {
+      gateC = 0;
+    } else if (command.equals("DGateClose")) {
       gateD = 0;
+    } else {
+      break;
+      //lcd.setCursor(0, 1);
+      Serial.print("Else Part Executed");
     }
-    Serial.println(command);
-    Serial.println(command.substring(6, 8));
-  }   
+  }
 
     parking_slot01();
     parking_slot02();
@@ -367,8 +364,8 @@ void loop() {
     ultraSonicThread.check();
     motor02Thread.check();
     motor01Thread.check();
-//    motor03Thread.check();
-//    motor04Thread.check();
+    motor03Thread.check();
+    motor04Thread.check();
     
   }
   else {
