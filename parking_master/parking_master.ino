@@ -128,7 +128,7 @@ void ultrasonic() {
 TimedAction ultraSonicThread = TimedAction(300, ultrasonic);
 
 void gate01() {
-  if (digitalRead(20) == LOW && !isallslotedFull) {
+  if (digitalRead(20) == LOW && (!isallslotedFull || (bookC == 1 || bookD == 1)))+ {
     lcd.clear();
     digitalWrite(13, HIGH);
     lcd.print("Front Gate Open ");
@@ -233,6 +233,39 @@ void specialParking_slot04() {
   }
 }
 
+void getData(){
+  
+    if (Serial.available()) {
+    command = Serial.readStringUntil('\n');
+    command.trim();
+    if (command.substring(0, 2).equals("CB")) {
+      bookC = 1;
+    }else if (command.substring(0, 2).equals("CC")) {
+      bookC = 0;
+    } 
+    
+    if (command.substring(2, 4).equals("DB")) {
+      bookD = 1;
+    }else if (command.substring(2, 4).equals("DC")) {
+      bookD = 0;
+    } 
+    
+    if (command.substring(4, 6).equals("CG")) {
+      gateC = 1;
+    }else if (command.substring(4, 6).equals("CT")) {
+      gateC = 0;
+    }
+    
+    if (command.substring(6, 8).equals("DG")) {
+      gateD = 1;
+    }else if (command.substring(6, 8).equals("DT")) {
+      gateD = 0;
+    }
+    Serial.println(command);
+  } 
+ }
+
+TimedAction getDataThread = TimedAction(1500, getData);
 
 void setup() {
 
@@ -293,11 +326,8 @@ void setup() {
   lcd.clear();
   digitalWrite(13, LOW);
   lcd.print("Avalible Slots :");
-
-motor4.write(153);
-delay(500);
-motor4.write(93);
-
+  gateC = 1;
+  gateD = 1;
   
 }
 
@@ -319,36 +349,8 @@ void loop() {
   Serial.print(slotD);
   Serial.println("_");
 
-  //get & apply reservation data from raspberrypi throgh out usb.
-  if (Serial.available()) {
-    command = Serial.readStringUntil('\n');
-    command.trim();
-    if (command.substring(0, 2).equals("CB")) {
-      bookC = 1;
-    }else if (command.substring(0, 2).equals("CC")) {
-      bookC = 0;
-    } 
-    
-    if (command.substring(2, 4).equals("DB")) {
-      bookD = 1;
-    }else if (command.substring(2, 4).equals("DC")) {
-      bookD = 0;
-    } 
-    
-    if (command.substring(4, 6).equals("CG")) {
-      gateC = 1;
-    }else if (command.substring(4, 6).equals("CT")) {
-      gateC = 0;
-    }
-    
-    if (command.substring(6, 8).equals("DG")) {
-      gateD = 1;
-    }else if (command.substring(6, 8).equals("DT")) {
-      gateD = 0;
-    }
-    Serial.println(command);
-    Serial.println(command.substring(6, 8));
-  }   
+  //get & apply reservation data from raspberrypi throgh out usb.  
+  getDataThread.check();
 
     parking_slot01();
     parking_slot02();
@@ -364,6 +366,7 @@ void loop() {
     ultraSonicThread.check();
     motor02Thread.check();
     motor01Thread.check();
+    getDataThread.check();
   }
   else if (slotA == 0 && slotB == 0 && slotC == 0 && slotD == 0 ) {
     isallslotedFull = false;
@@ -372,7 +375,8 @@ void loop() {
     lcd.print("All Slots Empty ");
     ultraSonicThread.check();
     motor02Thread.check();
-    motor01Thread.check();    
+    motor01Thread.check(); 
+    getDataThread.check();   
   }
   else {
     motor02Thread.check();
@@ -384,6 +388,7 @@ void loop() {
     lcd.print("Avalible Slots :");
     lcd.setCursor(0, 1);
     lcd.print("                ");
+    getDataThread.check();
     if(slotA == 0){
       lcd.setCursor(0, 1);
       lcd.print("01 ");
